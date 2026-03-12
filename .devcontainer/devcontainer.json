@@ -3,7 +3,7 @@
 {
 	"dockerComposeFile": "compose.yaml",
     "service": "airflow",
-	"postCreateCommand": "ln -s /workspaces/airflow/dags/ /opt/airflow/dags",
+	"postCreateCommand": "ln -s /workspaces/TransportDash/dags/ /opt/TransportDash/dags",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
 	"forwardPorts": [8080],
 	"remoteUser": "airflow",
