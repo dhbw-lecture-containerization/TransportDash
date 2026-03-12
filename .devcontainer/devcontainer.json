@@ -3,9 +3,19 @@
 {
 	"dockerComposeFile": "compose.yaml",
     "service": "airflow",
-	"postCreateCommand": "ln -s /workspaces/airflow/dags/ /opt/airflow/dags",
+	"postCreateCommand": {
+		"airflow symlink": "ln -s /workspaces/airflow/dags/ /opt/airflow/dags",
+		"pip requirements": "pip install -r dags/requirements.txt"
+	},
 	"workspaceFolder": "/workspaces/airflow",
 	"forwardPorts": [8080],
 	"remoteUser": "airflow",
-	"updateRemoteUserUID": false
+	"updateRemoteUserUID": false,
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"ms-python.vscode-pylance"
+			]
+		}
+	}
 }
