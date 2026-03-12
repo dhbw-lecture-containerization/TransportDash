@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - ../:/workspaces/airflow/:cached  
+      - ../:/workspaces/TransportDash/:cached  
     command: sleep infinity
 
   db:
