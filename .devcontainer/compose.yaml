@@ -1,0 +1,21 @@
+services:
+  devcontainer:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../:/workspaces/airflow/:cached  
+    command: sleep infinity
+
+  db:
+    image: postgres:latest
+    restart: always
+    volumes:
+      - postgres-data-airflow:/var/lib/postgresql
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+
+volumes:
+  postgres-data-airflow:
