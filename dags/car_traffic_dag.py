@@ -9,7 +9,11 @@ from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
 def parse_warning(warning : dict):
     out = {
-        "id": warning["identifier"]
+        "id": warning["identifier"],
+        "title": warning["title"],
+        "description": "\n".join(warning["description"]),
+        "latitude": float(warning["coordinate"]["lat"]),
+        "longitude": float(warning["coordinate"]["long"]),
     }
 
     a, b, c, d = warning["extent"].split(",")
@@ -63,6 +67,10 @@ def CarTrafficDag():
             CREATE TABLE IF NOT EXISTS car.warnings (
                 id char(64) PRIMARY KEY,
                 highwayId INTEGER NOT NULL REFERENCES car.highways(id) ON DELETE CASCADE,
+                title TEXT NOT NULL,
+                description TEXT NOT NULL,
+                latitude DOUBLE PRECISION NOT NULL,
+                longitude DOUBLE PRECISION NOT NULL,
                 bboxLatitude1 DOUBLE PRECISION NOT NULL,
                 bboxLongitude1 DOUBLE PRECISION NOT NULL,
                 bboxLatitude2 DOUBLE PRECISION NOT NULL,
@@ -127,8 +135,8 @@ def CarTrafficDag():
     @task
     def get_warnings():
         sql = """
-            INSERT INTO car.warnings (id, highwayId, bboxLatitude1, bboxLongitude1, bboxLatitude2, bboxLongitude2) 
-                VALUES ('{id}', {highway_id}, {bboxLat1}, {bboxLong1}, {bboxLat2}, {bboxLong2})
+            INSERT INTO car.warnings (id, highwayId, title, description, latitude, longitude, bboxLatitude1, bboxLongitude1, bboxLatitude2, bboxLongitude2) 
+                VALUES ({id!r}, {highway_id}, {title!r}, {description!r}, {latitude}, {longitude}, {bboxLat1}, {bboxLong1}, {bboxLat2}, {bboxLong2})
                 ON CONFLICT DO NOTHING;
         """
         task_instance = get_current_context()["ti"]
