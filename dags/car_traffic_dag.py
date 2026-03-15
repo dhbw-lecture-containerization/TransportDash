@@ -23,6 +23,16 @@ def CarTrafficDag():
         """
     )
 
+    create_timestamp_table = SQLExecuteQueryOperator(
+        task_id="create_timestamp_table",
+        conn_id="postgres_conn",
+        sql="""
+            CREATE TABLE IF NOT EXISTS car.timestamps (
+                id SERIAL PRIMARY KEY,
+                timestamp timestamptz UNIQUE NOT NULL
+            );""",
+    )
+
     create_highway_table = SQLExecuteQueryOperator(
         task_id="create_highway_table",
         conn_id="postgres_conn",
@@ -50,6 +60,23 @@ def CarTrafficDag():
 
         conn.commit()
 
-    create_schema >> create_highway_table >> get_highways()
+    @task
+    def create_timestamp():
+        postgres_hook = PostgresHook(postgres_conn_id="postgres_conn")
+        conn = postgres_hook.get_conn()
+        cur = conn.cursor()
+
+        cur.execute("INSERT INTO car.timestamps (timestamp) VALUES (now()) RETURNING id")
+        conn.commit()
+
+        return cur.fetchone()[0]
+
+    create_schema >> create_timestamp_table
+    create_schema >> create_highway_table
+
+    [create_timestamp_table, create_highway_table] >> get_highways()
+    [create_timestamp_table, create_highway_table] >> create_timestamp()
+
+    # create_schema >> [create_timestamp_table, create_highway_table] >> [get_highways(), create_timestamp()]
 
 dag = CarTrafficDag()
