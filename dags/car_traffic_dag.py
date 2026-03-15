@@ -56,7 +56,7 @@ def CarTrafficDag():
         sql="""
             CREATE TABLE IF NOT EXISTS car.highways (
                 id SERIAL PRIMARY KEY,
-                name VARCHAR(10) NOT NULL
+                name VARCHAR(10) UNIQUE NOT NULL
             );""",
     )
 
@@ -158,8 +158,6 @@ def CarTrafficDag():
                 warning = parse_warning(warning)
                 cur.execute(sql.format(highway_id=highway_id, **warning))
                 warning_ids.append(warning["id"])
-                break
-            break
         
         conn.commit()
         return warning_ids
