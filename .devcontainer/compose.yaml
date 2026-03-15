@@ -6,6 +6,8 @@ services:
     volumes:
       - ../:/workspaces/airflow/:cached  
     command: sleep infinity
+    environment:
+      AIRFLOW_CONN_POSTGRES_CONN : postgresql://postgres:postgres@db:5432/postgres
 
   db:
     image: postgres:latest
