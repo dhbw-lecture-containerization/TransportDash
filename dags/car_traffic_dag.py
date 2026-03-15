@@ -7,6 +7,19 @@ from airflow.sdk import dag, task, get_current_context
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
+def parse_warning(warning : dict):
+    out = {
+        "id": warning["identifier"]
+    }
+
+    a, b, c, d = warning["extent"].split(",")
+    out["bboxLat1"] = float(a)
+    out["bboxLong1"] = float(b)
+    out["bboxLat2"] = float(c)
+    out["bboxLong2"] = float(d)
+
+    return out
+
 @dag(
     dag_id="car_traffic_dag",
     schedule="0 0 * * *",
@@ -49,7 +62,11 @@ def CarTrafficDag():
         sql="""
             CREATE TABLE IF NOT EXISTS car.warnings (
                 id char(64) PRIMARY KEY,
-                highwayId INTEGER NOT NULL REFERENCES car.highways(id) ON DELETE CASCADE
+                highwayId INTEGER NOT NULL REFERENCES car.highways(id) ON DELETE CASCADE,
+                bboxLatitude1 DOUBLE PRECISION NOT NULL,
+                bboxLongitude1 DOUBLE PRECISION NOT NULL,
+                bboxLatitude2 DOUBLE PRECISION NOT NULL,
+                bboxLongitude2 DOUBLE PRECISION NOT NULL
             );""",
     )
 
@@ -110,8 +127,8 @@ def CarTrafficDag():
     @task
     def get_warnings():
         sql1 = """
-            INSERT INTO car.warnings (id, highwayId) 
-                VALUES ('{id}', {highway_id})
+            INSERT INTO car.warnings (id, highwayId, bboxLatitude1, bboxLongitude1, bboxLatitude2, bboxLongitude2) 
+                VALUES ('{id}', {highway_id}, {bboxLat1}, {bboxLong1}, {bboxLat2}, {bboxLong2})
                 ON CONFLICT DO NOTHING;
         """
         sql2 = """
@@ -134,7 +151,7 @@ def CarTrafficDag():
             warnings = data["warning"]
 
             for warning in warnings:
-                cur.execute(sql1.format(id=warning["identifier"], highway_id=highway_id))
+                cur.execute(sql1.format(highway_id=highway_id, **parse_warning(warning)))
                 cur.execute(sql2.format(warning_id=warning["identifier"], timestamp_id=timestamp_id))
                 break
             break
