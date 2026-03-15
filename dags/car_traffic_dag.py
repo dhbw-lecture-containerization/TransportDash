@@ -126,18 +126,14 @@ def CarTrafficDag():
     
     @task
     def get_warnings():
-        sql1 = """
+        sql = """
             INSERT INTO car.warnings (id, highwayId, bboxLatitude1, bboxLongitude1, bboxLatitude2, bboxLongitude2) 
                 VALUES ('{id}', {highway_id}, {bboxLat1}, {bboxLong1}, {bboxLat2}, {bboxLong2})
                 ON CONFLICT DO NOTHING;
         """
-        sql2 = """
-            INSERT INTO car.warningTimestamps (warningId, timestampId)
-                VALUES ('{warning_id}', {timestamp_id});
-        """
         task_instance = get_current_context()["ti"]
-        timestamp_id = task_instance.xcom_pull(task_ids='create_timestamp')
         highways = task_instance.xcom_pull(task_ids='get_highways')
+        warning_ids = []
 
         postgres_hook = PostgresHook(postgres_conn_id="postgres_conn")
         conn = postgres_hook.get_conn()
@@ -151,13 +147,35 @@ def CarTrafficDag():
             warnings = data["warning"]
 
             for warning in warnings:
-                cur.execute(sql1.format(highway_id=highway_id, **parse_warning(warning)))
-                cur.execute(sql2.format(warning_id=warning["identifier"], timestamp_id=timestamp_id))
+                warning = parse_warning(warning)
+                cur.execute(sql.format(highway_id=highway_id, **warning))
+                warning_ids.append(warning["id"])
                 break
             break
         
         conn.commit()
+        return warning_ids
     get_warnings = get_warnings()
+
+    @task
+    def timestamp_warnings():
+        sql = """
+            INSERT INTO car.warningTimestamps (warningId, timestampId)
+                VALUES ('{warning_id}', {timestamp_id});
+        """
+        task_instance = get_current_context()["ti"]
+        timestamp_id = task_instance.xcom_pull(task_ids='create_timestamp')
+        warning_ids = task_instance.xcom_pull(task_ids='get_warnings')
+
+        postgres_hook = PostgresHook(postgres_conn_id="postgres_conn")
+        conn = postgres_hook.get_conn()
+        cur = conn.cursor()
+
+        for warning_id in warning_ids:
+            cur.execute(sql.format(warning_id=warning_id, timestamp_id=timestamp_id))
+        
+        conn.commit()
+    timestamp_warnings = timestamp_warnings()
 
     create_schema >> create_timestamp_table
     create_schema >> create_highway_table
@@ -167,6 +185,7 @@ def CarTrafficDag():
     [create_timestamp_table, create_highway_table] >> get_highways
     [create_timestamp_table, create_highway_table] >> create_timestamp
 
-    [create_warnings_table, create_warning_timestamps_table, get_highways, create_timestamp] >> get_warnings
+    [create_warnings_table, get_highways] >> get_warnings
+    [create_warning_timestamps_table, create_timestamp, get_warnings] >> timestamp_warnings
 
 dag = CarTrafficDag()
