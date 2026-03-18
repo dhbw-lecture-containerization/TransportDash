@@ -1,6 +1,7 @@
 import datetime
 import json
 import pendulum
+from tqdm import tqdm
 
 import requests
 from airflow.sdk import dag, task, get_current_context
@@ -59,7 +60,7 @@ def CarTrafficDag():
         conn_id="postgres_conn",
         sql="""
             CREATE TABLE IF NOT EXISTS car.warnings (
-                id char(64) PRIMARY KEY,
+                id char(128) PRIMARY KEY,
                 highwayId INTEGER NOT NULL REFERENCES car.highways(id) ON DELETE CASCADE,
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
@@ -74,7 +75,7 @@ def CarTrafficDag():
         conn_id="postgres_conn",
         sql="""
             CREATE TABLE IF NOT EXISTS car.warningTimestamps (
-                warningId char(64) NOT NULL REFERENCES car.warnings(id) ON DELETE CASCADE,
+                warningId char(128) NOT NULL REFERENCES car.warnings(id) ON DELETE CASCADE,
                 timestampId INTEGER NOT NULL REFERENCES car.timestamps(id) ON DELETE CASCADE,
                 PRIMARY KEY (warningId, timestampId)
             );"""
@@ -127,7 +128,7 @@ def CarTrafficDag():
     def get_warnings():
         sql = """
             INSERT INTO car.warnings (id, highwayId, title, description, type, latitude, longitude) 
-                VALUES ({id!r}, {highway_id}, {title!r}, {description}, {type}, {latitude}, {longitude})
+                VALUES ({id!r}, {highway_id}, {title!r}, {description!r}, {type!r}, {latitude}, {longitude})
                 ON CONFLICT DO NOTHING;
         """
         task_instance = get_current_context()["ti"]
@@ -138,7 +139,7 @@ def CarTrafficDag():
         conn = postgres_hook.get_conn()
         cur = conn.cursor()
 
-        for (highway_id, highway_name) in highways:
+        for (highway_id, highway_name) in tqdm(highways):
             resp = requests.get(f"https://verkehr.autobahn.de/o/autobahn/{highway_name}/services/warning")
             if (not resp.ok): raise resp.raise_for_status()
 
