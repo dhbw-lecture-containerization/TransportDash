@@ -21,7 +21,7 @@ def parse_warning(warning : dict):
 
 @dag(
     dag_id="car_traffic_dag",
-    schedule="0 0 * * *",
+    schedule="*/10 * * * *",
     start_date=pendulum.datetime(2026, 3, 12),
     catchup=False,
     dagrun_timeout=datetime.timedelta(minutes=60)
