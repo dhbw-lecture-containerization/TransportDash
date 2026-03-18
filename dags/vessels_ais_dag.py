@@ -214,7 +214,7 @@ async def collect_and_insert(
         conn.close()
 
 
-def collect_destination_weather(postgres_conn_id: str, limit: int = 50) -> int:
+def collect_destination_weather(postgres_conn_id: str, limit: int = 300) -> int:
     hook = PostgresHook(postgres_conn_id=postgres_conn_id)
     conn = hook.get_conn()
     conn.autocommit = False
