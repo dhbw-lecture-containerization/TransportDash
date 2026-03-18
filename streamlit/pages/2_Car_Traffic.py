@@ -85,5 +85,8 @@ st.pydeck_chart(pdk.Deck(
     tooltip={"text": "{highway}: {type}\n{description}"}
 ))
 
+st.subheader("Alle Events als Tabelle")
+st.dataframe(recent_warnings.drop(columns=["id", "color", "radius"]))
+
 cursor.close()
 db_connection.close()
