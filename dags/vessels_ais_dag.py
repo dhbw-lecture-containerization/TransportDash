@@ -18,6 +18,11 @@ AIS_WS_URL = "wss://stream.aisstream.io/v0/stream"
 AIS_API_KEY = "pls use your own key, thx, pls no steal mine thx, thx bye :) pls no steal thx :)"
 
 
+def has_valid_destination(destination: str | None) -> bool:
+    normalized = (destination or "").strip().lower()
+    return bool(normalized) and normalized != "unknown"
+
+
 def fetch_weather_for_destination(destination: str) -> dict | None:
     destination = (destination or "").strip()
     if not destination:
@@ -164,7 +169,7 @@ async def collect_and_insert(
                     )
 
                     # Static messages --> different UPDATE but same table, who cares about Normalformen rn
-                    if static and destination != "UNKNOWN":
+                    if static and has_valid_destination(destination):
                         cur.execute(update_destination_sql, (destination, int(mmsi)))
                         continue
 
@@ -217,9 +222,8 @@ def collect_destination_weather(postgres_conn_id: str, limit: int = 50) -> int:
     select_destinations_sql = """
     SELECT DISTINCT destination
     FROM ais.positions
-    WHERE destination IS NOT NULL
-      AND destination <> ''
-      AND destination <> 'UNKNOWN'
+        WHERE NULLIF(BTRIM(destination), '') IS NOT NULL
+            AND LOWER(BTRIM(destination)) <> 'unknown'
     ORDER BY destination
     LIMIT %s
     """
@@ -251,6 +255,9 @@ def collect_destination_weather(postgres_conn_id: str, limit: int = 50) -> int:
             destinations = [row[0] for row in cur.fetchall()]
 
             for destination in destinations:
+                if not has_valid_destination(destination):
+                    continue
+
                 weather = fetch_weather_for_destination(destination)
                 if not weather:
                     continue
