@@ -1,10 +1,10 @@
+from zoneinfo import ZoneInfo
 import streamlit as st
 import pydeck as pdk
 import pandas as pd
 import psycopg2
 import textwrap
 
-st.cache_data(ttl=60)
 db_connection = psycopg2.connect(
     host="db",
     user="postgres",
@@ -31,7 +31,7 @@ def extract_warning(warning):
     return {
         "id": id,
         "title": title,
-        "description": "\n".join(textwrap.wrap(description.replace("\\n", "\n"), width=50, replace_whitespace=False)),
+        "description": "\n".join(textwrap.wrap(description.replace("\\n", "\n"), width=80, replace_whitespace=False)),
         "lat": lat,
         "lon": long,
         "highway": highway,
@@ -44,19 +44,27 @@ recent_warnings = pd.DataFrame(recent_warnings)
 
 def get_color(row):
     if row["type"] == "Warnung":
-        return [255, 165, 0]
+        return [255, 0, 0]
     elif row["type"] == "Baustelle":
-        return [0, 0, 255]
+        return [255, 165, 0]
     else:
         return [0, 255, 0]
 recent_warnings["color"] = recent_warnings.apply(get_color, axis=1)
+def get_radius(row):
+    if row["type"] == "Warnung":
+        return 5000
+    elif row["type"] == "Baustelle":
+        return 1000
+    else:
+        return 5000
+recent_warnings["radius"] = recent_warnings.apply(get_radius, axis=1)
 
 st.title("🚗 Car Traffic")
 
-col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric("🚧 Baustellen", 0)
-col2.metric("⚠️ Warnings", len(recent_warnings))
-col5.metric("⏱️ Aktualisiert", recent_timestamp.strftime("%H:%M"))
+col1, col2, col3 = st.columns(3)
+col1.metric("🚧 Baustellen", sum(recent_warnings["type"]=="Baustelle"))
+col2.metric("⚠️ Warnungen", sum(recent_warnings["type"]=="Warnung"))
+col3.metric("⏱️ Aktualisiert", recent_timestamp.astimezone(ZoneInfo("Europe/Berlin")).strftime("%d.%m (%H:%M)"))
 
 st.pydeck_chart(pdk.Deck(
     initial_view_state=pdk.ViewState(
@@ -70,13 +78,12 @@ st.pydeck_chart(pdk.Deck(
             data=recent_warnings,
             get_position='[lon, lat]',
             get_color='color',
-            get_radius=5000,
+            get_radius='radius',
             pickable=True,
         ),
     ],
     tooltip={"text": "{highway}: {type}\n{description}"}
 ))
-
 
 cursor.close()
 db_connection.close()
