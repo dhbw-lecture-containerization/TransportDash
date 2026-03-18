@@ -14,8 +14,8 @@ db_connection = psycopg2.connect(
 )
 cursor = db_connection.cursor()
 
-cursor.execute("SELECT id FROM car.timestamps ORDER BY timestamp DESC LIMIT 1")
-(recent_timestamp_id,) = cursor.fetchall()[0]
+cursor.execute("SELECT * FROM car.timestamps ORDER BY timestamp DESC LIMIT 1")
+(recent_timestamp_id, recent_timestamp) = cursor.fetchall()[0]
 
 recent_warnings = []
 cursor.execute(f"""
@@ -45,11 +45,10 @@ recent_warnings = pd.DataFrame(recent_warnings)
 
 st.title("🚗 Car Traffic")
 
-st.write("Car traffic data overview")
-
-# Example placeholder
-st.metric("Cars today", 54000)
-st.bar_chart([100, 200, 150, 300])
+col1, col2, col3, col4, col5 = st.columns(5)
+col1.metric("🚧 Baustellen", 0)
+col2.metric("⚠️ Warnings", len(recent_warnings))
+col5.metric("⏱️ Aktualisiert", recent_timestamp.strftime("%H:%M"))
 
 st.pydeck_chart(pdk.Deck(
     initial_view_state=pdk.ViewState(
