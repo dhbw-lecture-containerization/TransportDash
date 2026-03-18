@@ -1,19 +1,36 @@
-// For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/python
+//// -- Airflow --
+// {
+// 	"dockerComposeFile": "compose.yaml",
+//     "service": "airflow",
+// 	"postCreateCommand": {
+// 		"airflow symlink": "ln -s /workspaces/airflow/dags/ /opt/airflow/dags",
+// 		"pip requirements": "pip install -r dags/requirements.txt"
+// 	},
+// 	"workspaceFolder": "/workspaces/airflow",
+// 	"remoteUser": "airflow",
+// 	"updateRemoteUserUID": false,
+// 	"customizations": {
+// 		"vscode": {
+// 			"extensions": [
+//				"ms-python.python",
+// 				"ms-python.vscode-pylance"
+// 			]
+// 		}
+// 	}
+// }
+
+// -- Streamlit --
 {
 	"dockerComposeFile": "compose.yaml",
-    "service": "airflow",
+    "service": "streamlit",
 	"postCreateCommand": {
-		"airflow symlink": "ln -s /workspaces/airflow/dags/ /opt/airflow/dags",
-		"pip requirements": "pip install -r dags/requirements.txt"
+		"pip requirements": "pip install -r streamlit/requirements.txt"
 	},
-	"workspaceFolder": "/workspaces/airflow",
-	"forwardPorts": [8080],
-	"remoteUser": "airflow",
-	"updateRemoteUserUID": false,
+	"workspaceFolder": "/workspace",
 	"customizations": {
 		"vscode": {
 			"extensions": [
+				"ms-python.python",
 				"ms-python.vscode-pylance"
 			]
 		}
