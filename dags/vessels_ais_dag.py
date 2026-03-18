@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+from urllib.parse import quote_plus
+from urllib.request import urlopen
 from datetime import datetime, timedelta, timezone
 
 import pendulum
@@ -13,7 +15,58 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 POSTGRES_CONN_ID = "postgres_conn"
 AIS_WS_URL = "wss://stream.aisstream.io/v0/stream"
-AIS_API_KEY = "professional shitposter key, pls no steal"
+AIS_API_KEY = "pls use your own key, thx, pls no steal mine thx, thx bye :) pls no steal thx :)"
+
+
+def fetch_weather_for_destination(destination: str) -> dict | None:
+    destination = (destination or "").strip()
+    if not destination:
+        return None
+
+    # Open-Meteo geocoding + current weather (no API key required)
+    geocode_url = (
+        "https://geocoding-api.open-meteo.com/v1/search"
+        f"?name={quote_plus(destination)}&count=1&language=en&format=json"
+    )
+
+    try:
+        with urlopen(geocode_url, timeout=10) as response:
+            geocode_data = json.loads(response.read().decode("utf-8"))
+
+        results = geocode_data.get("results") or []
+        if not results:
+            return None
+
+        best = results[0]
+        latitude = best.get("latitude")
+        longitude = best.get("longitude")
+
+        if latitude is None or longitude is None:
+            return None
+
+        weather_url = (
+            "https://api.open-meteo.com/v1/forecast"
+            f"?latitude={latitude}&longitude={longitude}&current=temperature_2m,"
+            "apparent_temperature,precipitation,weather_code,wind_speed_10m"
+            "&timezone=UTC"
+        )
+
+        with urlopen(weather_url, timeout=10) as response:
+            weather_data = json.loads(response.read().decode("utf-8"))
+
+        return {
+            "destination": destination,
+            "latitude": latitude,
+            "longitude": longitude,
+            "resolved_name": best.get("name"),
+            "country": best.get("country"),
+            "admin1": best.get("admin1"),
+            "current": weather_data.get("current", {}),
+            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "provider": "open-meteo",
+        }
+    except Exception:
+        return None
 
 
 async def collect_and_insert(
@@ -156,9 +209,76 @@ async def collect_and_insert(
         conn.close()
 
 
+def collect_destination_weather(postgres_conn_id: str, limit: int = 50) -> int:
+    hook = PostgresHook(postgres_conn_id=postgres_conn_id)
+    conn = hook.get_conn()
+    conn.autocommit = False
+
+    select_destinations_sql = """
+    SELECT DISTINCT destination
+    FROM ais.positions
+    WHERE destination IS NOT NULL
+      AND destination <> ''
+      AND destination <> 'UNKNOWN'
+    ORDER BY destination
+    LIMIT %s
+    """
+
+    upsert_weather_sql = """
+    INSERT INTO ais.destination_weather (
+        destination,
+        latitude,
+        longitude,
+        weather,
+        provider,
+        updated_at
+    )
+    VALUES (%s, %s, %s, %s::jsonb, %s, NOW())
+    ON CONFLICT (destination)
+    DO UPDATE SET
+        latitude = EXCLUDED.latitude,
+        longitude = EXCLUDED.longitude,
+        weather = EXCLUDED.weather,
+        provider = EXCLUDED.provider,
+        updated_at = NOW()
+    """
+
+    updated = 0
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(select_destinations_sql, (limit,))
+            destinations = [row[0] for row in cur.fetchall()]
+
+            for destination in destinations:
+                weather = fetch_weather_for_destination(destination)
+                if not weather:
+                    continue
+
+                cur.execute(
+                    upsert_weather_sql,
+                    (
+                        destination,
+                        weather.get("latitude"),
+                        weather.get("longitude"),
+                        json.dumps(weather),
+                        weather.get("provider", "open-meteo"),
+                    ),
+                )
+                updated += 1
+
+        conn.commit()
+        return updated
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 @dag(
     dag_id="ais_devcontainer_to_postgres",
-    schedule="*/5 * * * *",
+    schedule="*/30 * * * *",
     start_date=pendulum.datetime(2026, 3, 1, tz="UTC"),
     catchup=False,
     max_active_runs=1,
@@ -200,6 +320,18 @@ def ais_devcontainer_to_postgres():
 
         CREATE INDEX IF NOT EXISTS idx_ais_positions_timestamp
         ON ais.positions (timestamp DESC);
+
+        CREATE TABLE IF NOT EXISTS ais.destination_weather (
+            destination VARCHAR(255) PRIMARY KEY,
+            latitude DOUBLE PRECISION,
+            longitude DOUBLE PRECISION,
+            weather JSONB NOT NULL,
+            provider VARCHAR(64) NOT NULL DEFAULT 'open-meteo',
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_ais_destination_weather_updated_at
+        ON ais.destination_weather (updated_at DESC);
         """,
     )
 
@@ -221,7 +353,14 @@ def ais_devcontainer_to_postgres():
             )
         )
 
-    init_schema >> ingest()
+    @task()
+    def enrich_destination_weather() -> int:
+        return collect_destination_weather(
+            postgres_conn_id=POSTGRES_CONN_ID,
+            limit=50,
+        )
+
+    init_schema >> ingest() >> enrich_destination_weather()
 
 
 dag = ais_devcontainer_to_postgres()
