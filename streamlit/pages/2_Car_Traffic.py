@@ -27,21 +27,29 @@ cursor.execute(f"""
     WHERE wt.timestampid={recent_timestamp_id}
 """)
 def extract_warning(warning):
-    (id, _, _, _, title, description, lat, long, bbox_lat1, bbox_long1, bbox_lat2, bboxlong2, _, highway, _, timestamp) = warning
+    (id, _, _, _, title, description, type, lat, long, _, highway, _, timestamp) = warning
     return {
         "id": id,
         "title": title,
         "description": "\n".join(textwrap.wrap(description.replace("\\n", "\n"), width=50, replace_whitespace=False)),
         "lat": lat,
         "lon": long,
-        "bbox": ((bbox_lat1, bbox_long1), (bbox_lat2, bboxlong2)),
         "highway": highway,
         "timestamp": timestamp,
-        "type": "Warnung"
+        "type": type
     }
 for warning in cursor.fetchall():
     recent_warnings.append(extract_warning(warning))
 recent_warnings = pd.DataFrame(recent_warnings)
+
+def get_color(row):
+    if row["type"] == "Warnung":
+        return [255, 165, 0]
+    elif row["type"] == "Baustelle":
+        return [0, 0, 255]
+    else:
+        return [0, 255, 0]
+recent_warnings["color"] = recent_warnings.apply(get_color, axis=1)
 
 st.title("🚗 Car Traffic")
 
@@ -61,7 +69,7 @@ st.pydeck_chart(pdk.Deck(
             "ScatterplotLayer",
             data=recent_warnings,
             get_position='[lon, lat]',
-            get_color=[255, 165, 0],
+            get_color='color',
             get_radius=5000,
             pickable=True,
         ),

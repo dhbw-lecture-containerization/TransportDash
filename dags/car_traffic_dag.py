@@ -16,12 +16,6 @@ def parse_warning(warning : dict):
         "longitude": float(warning["coordinate"]["long"]),
     }
 
-    a, b, c, d = warning["extent"].split(",")
-    out["bboxLat1"] = float(a)
-    out["bboxLong1"] = float(b)
-    out["bboxLat2"] = float(c)
-    out["bboxLong2"] = float(d)
-
     return out
 
 @dag(
@@ -69,12 +63,9 @@ def CarTrafficDag():
                 highwayId INTEGER NOT NULL REFERENCES car.highways(id) ON DELETE CASCADE,
                 title TEXT NOT NULL,
                 description TEXT NOT NULL,
+                type TEXT NOT NULL,
                 latitude DOUBLE PRECISION NOT NULL,
-                longitude DOUBLE PRECISION NOT NULL,
-                bboxLatitude1 DOUBLE PRECISION NOT NULL,
-                bboxLongitude1 DOUBLE PRECISION NOT NULL,
-                bboxLatitude2 DOUBLE PRECISION NOT NULL,
-                bboxLongitude2 DOUBLE PRECISION NOT NULL
+                longitude DOUBLE PRECISION NOT NULL
             );""",
     )
 
@@ -135,8 +126,8 @@ def CarTrafficDag():
     @task
     def get_warnings():
         sql = """
-            INSERT INTO car.warnings (id, highwayId, title, description, latitude, longitude, bboxLatitude1, bboxLongitude1, bboxLatitude2, bboxLongitude2) 
-                VALUES ({id!r}, {highway_id}, {title!r}, {description!r}, {latitude}, {longitude}, {bboxLat1}, {bboxLong1}, {bboxLat2}, {bboxLong2})
+            INSERT INTO car.warnings (id, highwayId, title, description, type, latitude, longitude) 
+                VALUES ({id!r}, {highway_id}, {title!r}, {description}, {type}, {latitude}, {longitude})
                 ON CONFLICT DO NOTHING;
         """
         task_instance = get_current_context()["ti"]
@@ -156,9 +147,20 @@ def CarTrafficDag():
 
             for warning in warnings:
                 warning = parse_warning(warning)
-                cur.execute(sql.format(highway_id=highway_id, **warning))
+                cur.execute(sql.format(highway_id=highway_id, type="Warnung", **warning))
                 warning_ids.append(warning["id"])
-        
+            
+            resp = requests.get(f"https://verkehr.autobahn.de/o/autobahn/{highway_name}/services/roadworks")
+            if (not resp.ok): raise resp.raise_for_status()
+
+            data = json.loads(resp.content)
+            warnings = data["roadworks"]
+
+            for warning in warnings:
+                warning = parse_warning(warning)
+                cur.execute(sql.format(highway_id=highway_id, type="Baustelle", **warning))
+                warning_ids.append(warning["id"])
+
         conn.commit()
         return warning_ids
     get_warnings = get_warnings()
