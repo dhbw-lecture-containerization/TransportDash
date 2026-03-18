@@ -7,13 +7,13 @@ from datetime import datetime, timedelta, timezone
 import pendulum
 import websockets
 
-from airflow.decorators import dag, task
+from airflow.sdk import dag, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 POSTGRES_CONN_ID = "postgres_conn"
 AIS_WS_URL = "wss://stream.aisstream.io/v0/stream"
-AIS_API_KEY = "suckass"
+AIS_API_KEY = "professional shitposter key, pls no steal"
 
 
 async def collect_and_insert(
@@ -30,7 +30,7 @@ async def collect_and_insert(
     conn.autocommit = False
 
     insert_sql = """
-    INSERT INTO ais_positions (
+    INSERT INTO ais.positions (
         mmsi,
         ship_name,
         latitude,
@@ -38,10 +38,11 @@ async def collect_and_insert(
         sog,
         cog,
         navigational_status,
+        destination,
         timestamp,
         raw_payload
     )
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb)
     ON CONFLICT (mmsi, timestamp)
     DO UPDATE SET
         ship_name = EXCLUDED.ship_name,
@@ -50,7 +51,14 @@ async def collect_and_insert(
         sog = EXCLUDED.sog,
         cog = EXCLUDED.cog,
         navigational_status = EXCLUDED.navigational_status,
+        destination = EXCLUDED.destination,
         raw_payload = EXCLUDED.raw_payload
+    """
+
+    update_destination_sql = """
+    UPDATE ais.positions
+    SET destination = %s
+    WHERE mmsi = %s
     """
 
     inserted = 0
@@ -67,7 +75,7 @@ async def collect_and_insert(
                     {
                         "APIKey": api_key,
                         "BoundingBoxes": bounding_boxes,
-                        "FilterMessageTypes": ["PositionReport"],
+                        "FilterMessageTypes": ["PositionReport", "ShipStaticData"],
                     }
                 )
             )
@@ -88,9 +96,26 @@ async def collect_and_insert(
                     meta = data.get("MetaData", {})
                     msg = data.get("Message", {})
                     pos = msg.get("PositionReport", {})
+                    static = msg.get("ShipStaticData", {})
 
                     mmsi = meta.get("MMSI")
+
                     if mmsi is None:
+                        continue
+
+                    destination = (
+                        meta.get("Destination")
+                        or static.get("Destination")
+                        or static.get("destination")
+                        or "UNKNOWN"
+                    )
+
+                    # Static messages --> different UPDATE but same table, who cares about Normalformen rn
+                    if static and destination != "UNKNOWN":
+                        cur.execute(update_destination_sql, (destination, int(mmsi)))
+                        continue
+
+                    if not pos:
                         continue
 
                     # Für Dev reicht ein Fallback auf "jetzt", falls kein Timestamp mitkommt
@@ -114,6 +139,7 @@ async def collect_and_insert(
                             pos.get("Sog"),
                             pos.get("Cog"),
                             pos.get("NavigationalStatus"),
+                            destination,
                             timestamp,
                             json.dumps(data),
                         ),
@@ -135,6 +161,7 @@ async def collect_and_insert(
     schedule="*/5 * * * *",
     start_date=pendulum.datetime(2026, 3, 1, tz="UTC"),
     catchup=False,
+    max_active_runs=1,
     default_args={
         "owner": "dev",
         "retries": 1,
@@ -148,7 +175,15 @@ def ais_devcontainer_to_postgres():
         task_id="init_schema",
         conn_id=POSTGRES_CONN_ID,
         sql="""
-        CREATE TABLE IF NOT EXISTS ais_positions (
+        DO $$
+        BEGIN
+            CREATE SCHEMA ais;
+        EXCEPTION
+            WHEN duplicate_schema THEN NULL;
+        END
+        $$;
+
+        CREATE TABLE IF NOT EXISTS ais.positions (
             mmsi BIGINT NOT NULL,
             ship_name TEXT,
             latitude DOUBLE PRECISION,
@@ -156,6 +191,7 @@ def ais_devcontainer_to_postgres():
             sog DOUBLE PRECISION,
             cog DOUBLE PRECISION,
             navigational_status INTEGER,
+            destination VARCHAR(255),
             timestamp TIMESTAMPTZ NOT NULL,
             raw_payload JSONB,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -163,7 +199,7 @@ def ais_devcontainer_to_postgres():
         );
 
         CREATE INDEX IF NOT EXISTS idx_ais_positions_timestamp
-        ON ais_positions (timestamp DESC);
+        ON ais.positions (timestamp DESC);
         """,
     )
 
