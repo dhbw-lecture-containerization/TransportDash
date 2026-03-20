@@ -1,1 +1,6 @@
 streamlit
+polars
+pandas
+geopandas
+connectorx
+plotly
