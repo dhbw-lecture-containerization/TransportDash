@@ -59,3 +59,12 @@ Link zum Kubernetes Deployment Manifest im Repository.
 ## Tests
 
 - Test: Beschreibung, Link zum Testcode im Repository
+
+
+## Credits:
+
+
+shapefile: 
+airlines dataset: https://www.kaggle.com/datasets/elmoallistair/airlines-airport-and-routes
+
+
