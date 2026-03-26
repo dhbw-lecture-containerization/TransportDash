@@ -5,3 +5,4 @@ geopandas
 connectorx
 plotly
 psycopg2-binary
+matplotlib
