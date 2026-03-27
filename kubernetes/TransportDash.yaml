@@ -141,6 +141,8 @@ stringData:
   AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
   AIRFLOW__CORE__FERNET_KEY: ""
   AIRFLOW__API__SECRET_KEY: "supersecretkey"
+  AIRFLOW_CONN_POSTGRES_CONN: postgresql://airflow:airflow@postgres:5432/airflow
+  AIRFLOW__API_AUTH__JWT_SECRET: "superdupersecretkey"
 ---
 apiVersion: v1
 kind: Service
@@ -191,6 +193,12 @@ spec:
               value: airflow.api.auth.backend.basic_auth
             - name: AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS
               value: "True"
+            - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
+              value: socket.gethostname
+            - name: AIRFLOW__LOGGING__WORKER_LOG_SERVER_PORT
+              value: "8793"
+            - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
+              value: "http://airflow-webserver:8080/execution/"
           envFrom:
             - secretRef:
                 name: airflow-secret
@@ -232,6 +240,12 @@ spec:
               value: "false"
             - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
               value: "true"
+            - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
+              value: socket.gethostname
+            - name: AIRFLOW__LOGGING__WORKER_LOG_SERVER_PORT
+              value: "8793"
+            - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
+              value: "http://airflow-webserver:8080/execution/"
           envFrom:
             - secretRef:
                 name: airflow-secret
@@ -269,6 +283,12 @@ spec:
               value: "false"
             - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
               value: "true"
+            - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
+              value: socket.gethostname
+            - name: AIRFLOW__LOGGING__WORKER_LOG_SERVER_PORT
+              value: "8793"
+            - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
+              value: "http://airflow-webserver:8080/execution/"
           envFrom:
             - secretRef:
                 name: airflow-secret
