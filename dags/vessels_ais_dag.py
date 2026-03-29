@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 
 import pendulum
 import websockets
+import os
 
 from airflow.sdk import dag, task
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
@@ -15,8 +16,7 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 
 POSTGRES_CONN_ID = "postgres_conn"
 AIS_WS_URL = "wss://stream.aisstream.io/v0/stream"
-AIS_API_KEY = "pls use your own key, thx, pls no steal mine thx, thx bye :) pls no steal thx :)"
-
+AIS_API_KEY = os.getenv("AIS_API_KEY")
 
 def has_valid_destination(destination: str | None) -> bool:
     normalized = (destination or "").strip().lower()
