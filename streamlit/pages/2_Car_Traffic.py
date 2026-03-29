@@ -10,7 +10,7 @@ DB_HOST = os.getenv("POSTGRES_HOST", "postgres")
 DB_USER = os.getenv("POSTGRES_USER", "airflow")
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "airflow")
 DB_NAME = os.getenv("POSTGRES_DB", "airflow")
-DB_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
+DB_PORT = os.getenv("POSTGRES_PORT", "5432")
 
 try:
     db_connection = psycopg2.connect(
