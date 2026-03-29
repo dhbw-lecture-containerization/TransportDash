@@ -34,7 +34,17 @@ Kurze Beschreibung des Projekts. Was macht es? Welche APIs werden genutzt? Welch
 
 ## Devcontainer Konfiguration
 
-Beschreibung der Devcontainer Konfiguration im idealfall selbsterklärend durch die Dateien im Repository.
+Die Devcontainer Konfiguration kann in dem Verzeichnis `.devcontainer` eingesehen werden.
+
+Airflow verwendet ein lokal bauendes Dockerfile (nach Vorlage aus den Vorlesungen).
+Streamlit als Dashboard verwendet einen von Microsoft bereitgestellten Pythoncontainer.
+Dazu wird ein Postgres gestartet, welches als Datenplattform von beiden Services verwendet wird.
+
+Die Auswahl des Entwicklungszenarios (Airflow Entwicklung / Streamlit Entwicklung) kann
+über `devcontainer.json` getroffen werden. Hier bitte einfach das gewünschte Tool auskommentieren.
+
+Innerhalb des Airflow Devcontainers kann airflow über `airflow standalone` gestartet werden.
+Streamlit wird mit `streamlit run streamlit/app.py` gestartet.
 
 ## Kubernetes Deployment Manifest
 
@@ -49,3 +59,12 @@ Link zum Kubernetes Deployment Manifest im Repository.
 ## Tests
 
 - Test: Beschreibung, Link zum Testcode im Repository
+
+
+## Credits:
+
+
+shapefile: 
+airlines dataset: https://www.kaggle.com/datasets/elmoallistair/airlines-airport-and-routes
+
+

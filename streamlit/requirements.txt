@@ -1,2 +1,8 @@
 streamlit
+polars
+pandas
+geopandas
+connectorx
+plotly
 psycopg2-binary
+matplotlib

@@ -1,6 +1,8 @@
 traffic==2.13
 pyopensky==2.16
 #apache-airflow==3.1.8
+#apache-airflow-providers-postgres
 fastapi==0.117.1
 polars
 connectorx
+geopandas
