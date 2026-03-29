@@ -111,7 +111,7 @@ spec:
     spec:
       containers:
         - name: streamlit
-          image: transportdash-streamlit:fix2
+          image: transportdash-streamlit:fix3
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8501
@@ -178,7 +178,7 @@ spec:
     spec:
       containers:
         - name: airflow-webserver
-          image: transportdash-airflow:fix2
+          image: transportdash-airflow:fix3
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -194,7 +194,7 @@ spec:
             - name: AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS
               value: "True"
             - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
-              value: socket.gethostname
+              value: airflow.utils.net.get_host_ip_address
             - name: AIRFLOW__LOGGING__WORKER_LOG_SERVER_PORT
               value: "8793"
             - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
@@ -231,7 +231,7 @@ spec:
     spec:
       containers:
         - name: airflow-scheduler
-          image: transportdash-airflow:fix2
+          image: transportdash-airflow:fix3
           imagePullPolicy: IfNotPresent
           env:
             - name: AIRFLOW__CORE__EXECUTOR
@@ -241,7 +241,7 @@ spec:
             - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
               value: "true"
             - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
-              value: socket.gethostname
+              value: airflow.utils.net.get_host_ip_address
             - name: AIRFLOW__LOGGING__WORKER_LOG_SERVER_PORT
               value: "8793"
             - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
@@ -274,7 +274,7 @@ spec:
     spec:
       containers:
         - name: airflow-dagprocessor
-          image: transportdash-airflow:fix2
+          image: transportdash-airflow:fix3
           imagePullPolicy: IfNotPresent
           env:
             - name: AIRFLOW__CORE__EXECUTOR
@@ -284,7 +284,7 @@ spec:
             - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
               value: "true"
             - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
-              value: socket.gethostname
+              value: airflow.utils.net.get_host_ip_address
             - name: AIRFLOW__LOGGING__WORKER_LOG_SERVER_PORT
               value: "8793"
             - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
