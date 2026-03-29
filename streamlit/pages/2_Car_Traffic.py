@@ -1,17 +1,29 @@
 from zoneinfo import ZoneInfo
+import os
 import streamlit as st
 import pydeck as pdk
 import pandas as pd
 import psycopg2
 import textwrap
 
-db_connection = psycopg2.connect(
-    host="db",
-    user="postgres",
-    password="postgres",
-    database="postgres",
-    port=5432
-)
+DB_HOST = os.getenv("POSTGRES_HOST", "postgres")
+DB_USER = os.getenv("POSTGRES_USER", "airflow")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "airflow")
+DB_NAME = os.getenv("POSTGRES_DB", "airflow")
+DB_PORT = int(os.getenv("POSTGRES_PORT", "5432"))
+
+try:
+    db_connection = psycopg2.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        port=DB_PORT,
+    )
+except Exception as exc:
+    st.error(f"Fehler bei der Datenbankverbindung: {exc}")
+    st.stop()
+
 cursor = db_connection.cursor()
 
 cursor.execute("SELECT * FROM car.timestamps ORDER BY timestamp DESC LIMIT 1")
