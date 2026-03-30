@@ -2,9 +2,15 @@
 
 ## Project Description
 
-A Dashboard with various transport data
+Dieses Projekt dient der Darstellung verschiedener Daten aus dem Luft-, Schiffs- und Straßenverkehr.
+Hierbei werden durch automatisierte DAGs mehrere API-Endpunkte angefragt und die so erhaltenen Daten in einer
+Postgres Datenbank persistent abgespeichert. Zur Visualisierung wird ein Streamlit Frontend angeboten, welches
+aktuelle Daten der Verkehrsarten auf mehreren Seiten darstellt.
 
-Kurze Beschreibung des Projekts. Was macht es? Welche APIs werden genutzt? Welche Datenbank wird verwendet? Wie sieht die Visualisierung aus?
+Die Daten werden von folgenden Diensten abgerufen:
+- [https://opensky-network.org/](https://opensky-network.org/) für Luftverkehrsdaten
+- [https://autobahn.api.bund.dev/](https://autobahn.api.bund.dev/) für Straßenverkehrsdaten
+- [https://aisstream.io/](https://aisstream.io/) für Schiffsverkehrsdaten
 
 ## Teammitglieder
 
@@ -58,8 +64,13 @@ Link zum Kubernetes Deployment Manifest im Repository.
 
 ## Tests
 
-- Test: Beschreibung, Link zum Testcode im Repository
+In diesem Projekt wird ein durch Github Workflows automatisierter Test bei jedem push auf main oder PR durchgeführt.
+Die Einstellungen der Testumgebung können in [/.github/workflows/tests.yml](/.github/workflows/tests.yml) betrachtet werden.
+Die Tests werden durch das Python Modul `unittest` und der Datei [/tests/tests.py](/tests/tests.py) durchgeführt.
 
+In einem Test wird hierbei die relativ einfache Bereinigung der von einer API bereitgestellten Daten getestet.
+Genauer werden die Daten der AutobahnGMBH durch eine Methode geleitet und so auf das in der Datenbank verwendete
+Schema angepasst.
 
 ## Credits:
 
