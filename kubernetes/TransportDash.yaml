@@ -39,7 +39,7 @@ stringData:
   AIRFLOW_CONN_POSTGRES_CONN: postgresql://airflow:airflow@postgres:5432/airflow
   AIRFLOW__API_AUTH__JWT_SECRET: "superdupersecretkey"
 data:
-  AIS_API_KEY: OWFkYmQ5NjQ2NzRkMjJiYTUyOWUxMzg2YWFjY2NlYzc2NDUyYzM2Yg== # Base64 encoded value
+  AIS_API_KEY: YzQzMDJjMDgyYmFiNDNhZjEzMTdhNWZhZDQ2ZDNiMzQ0MmJhODM2Zg== # Base64 encoded value
 ---
 apiVersion: v1
 kind: Secret
@@ -137,7 +137,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: streamlit
-          image: transportdash-streamlit:fix7
+          image: transportdash-streamlit:v2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8501
@@ -198,7 +198,7 @@ spec:
     spec:
       containers:
         - name: airflow-webserver
-          image: transportdash-airflow:fix7
+          image: transportdash-airflow:v2
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -251,7 +251,7 @@ spec:
     spec:
       containers:
         - name: airflow-scheduler
-          image: transportdash-airflow:fix7
+          image: transportdash-airflow:v2
           imagePullPolicy: IfNotPresent
           env:
             - name: AIRFLOW__CORE__EXECUTOR
@@ -294,7 +294,7 @@ spec:
     spec:
       containers:
         - name: airflow-dagprocessor
-          image: transportdash-airflow:fix7
+          image: transportdash-airflow:v2
           imagePullPolicy: IfNotPresent
           env:
             - name: AIRFLOW__CORE__EXECUTOR
