@@ -4,8 +4,10 @@ import pandas as pd  # grrrr, pandas
 import matplotlib.pyplot as plt
 import pydeck as pdk
 import logging
+import os
 from pathlib import Path
 import plotly.express as px
+from urllib.parse import quote_plus
 
 
 st.set_page_config(
@@ -17,7 +19,17 @@ st.header("Flugverkehrsdaten Dashboard")
 st.caption("""⚠️ Hinweis: Dieses Dashboard visualisiert Daten, die mit dem Airflow DAG gesammelt werden.
            Die Daten und Auswertungen erheben keinen Anspruch auf Vollständigkeit oder Eignung zur Verwendung in wissenschaftlichen Arbeiten.
            Sie sind lediglich als Technologie-Demonstrator / proof-of-concept zu sehen.""")
-POSTGRES_URI = "postgres://postgres:postgres@db:5432/postgres"
+
+DB_HOST = os.getenv("POSTGRES_HOST", "postgres")
+DB_USER = os.getenv("POSTGRES_USER", "airflow")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "airflow")
+DB_NAME = os.getenv("POSTGRES_DB", "airflow")
+DB_PORT = os.getenv("POSTGRES_PORT", "5432")
+
+POSTGRES_URI = (
+    f"postgresql://{quote_plus(DB_USER)}:{quote_plus(DB_PASSWORD)}"
+    f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
 
 
 @st.cache_data(ttl=600)
@@ -46,7 +58,8 @@ def create_combined_flight_table(flights: pl.LazyFrame, points: pl.LazyFrame) ->
 
 def get_airline_data_lf() -> pl.LazyFrame:
     logging.debug("reading airline data")
-    lf = pl.scan_csv(Path(__file__).parent.parent.parent / "assets" / "airlines" / "airlines.csv")
+    assets_root = Path(__file__).resolve().parents[1] / "assets"
+    lf = pl.scan_csv(assets_root / "airlines" / "airlines.csv")
     lf = lf.rename(
         {
             "Name": "airline_name",
