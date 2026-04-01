@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     proj-bin \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt /requirements.txt
+COPY dags/requirements.txt /requirements.txt
 
 RUN mkdir -p /opt/airflow/dags
 
@@ -20,6 +20,6 @@ USER airflow
 
 RUN pip install --no-cache-dir -r /requirements.txt
 
-COPY --chown=airflow:root *.py /opt/airflow/dags/
+COPY --chown=airflow:root dags/*.py /opt/airflow/dags/
 
-COPY --chown=airflow:root assets/geography /opt/airflow/assets/geography
+COPY --chown=airflow:root streamlit/assets/geography /opt/airflow/assets/geography
