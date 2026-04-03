@@ -137,7 +137,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: streamlit
-          image: transportdash-streamlit:v1
+          image: ghcr.io/dhbw-lecture-containerization/transportdash-streamlit:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8501
@@ -198,7 +198,7 @@ spec:
     spec:
       containers:
         - name: airflow-webserver
-          image: transportdash-airflow:v1
+          image: ghcr.io/dhbw-lecture-containerization/transportdash-airflow:latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
@@ -251,7 +251,7 @@ spec:
     spec:
       containers:
         - name: airflow-scheduler
-          image: transportdash-airflow:v1
+          image: ghcr.io/dhbw-lecture-containerization/transportdash-airflow:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: AIRFLOW__CORE__EXECUTOR
@@ -294,7 +294,7 @@ spec:
     spec:
       containers:
         - name: airflow-dagprocessor
-          image: transportdash-airflow:v1
+          image: ghcr.io/dhbw-lecture-containerization/transportdash-airflow:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: AIRFLOW__CORE__EXECUTOR

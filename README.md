@@ -82,4 +82,28 @@ und das fehlen von erwarteten Datenpunkten.
 shapefile: 
 airlines dataset: https://www.kaggle.com/datasets/elmoallistair/airlines-airport-and-routes
 
+## Image-Helferskripte
+
+Im Repository gibt es zwei Hilfsskripte für die Container-Images des Projekts:
+
+- `build_images.sh` baut die lokalen Images `transportdash-airflow:latest` und `transportdash-streamlit:latest` aus den Dockerfiles in `dags/` und `streamlit/` und zieht zusätzlich das Basis-Image `postgres:16`.
+- `pull_images.sh` lädt die für das Kubernetes-Deployment benötigten Images herunter. Dabei werden `postgres:16`, das Streamlit-Image und das Airflow-Image gezogen.
+
+Für `pull_images.sh` wird eine funktionierende Anmeldung bei `ghcr.io` benötigt. Falls der Pull fehlschlägt, kann stattdessen `build_images.sh` verwendet werden, um die Images lokal zu bauen.
+
+Außerdem müssen die Ports geforwarded werden durch z.B:
+
+```bash
+kubectl port-forward service/airflow-webserver 8080:8080 -n transportdash
+kubectl port-forward service/streamlit 8501:8501 -n transportdash 
+```
+
+Beispielbefehle:
+
+```bash
+kubectl create namespace transportdash
+./pull_images.sh
+kubectl apply -n transportdash -f kubernetes/TransportDash.yaml
+```
+
 
