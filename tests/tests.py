@@ -2,6 +2,8 @@
 
 
 import unittest
+import requests
+import json
 
 from dags.car_traffic_dag import parse_warning
 
@@ -79,3 +81,13 @@ class CarDataTest(unittest.TestCase):
             "longitude": 6.850192886597498
         }
         self.assertDictEqual(parse_warning(input), output)
+
+class CarAPITest(unittest.TestCase):
+    def test_api_response(self):
+        resp = requests.get("https://verkehr.autobahn.de/o/autobahn/")
+        self.assertTrue(resp.ok) # Check for api connection
+
+        data = json.loads(resp.content)
+        self.assertTrue("roads" in data) # Check for response schema
+        
+        self.assertTrue(all(road in data["roads"] for road in ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9"])) # Check for major roads

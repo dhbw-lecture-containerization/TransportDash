@@ -72,6 +72,10 @@ In einem Test wird hierbei die relativ einfache Bereinigung der von einer API be
 Genauer werden die Daten der AutobahnGMBH durch eine Methode geleitet und so auf das in der Datenbank verwendete
 Schema angepasst.
 
+Ein weiterer Test dient der Funktionlität der AutobahnAPI. Hierbei wird eine einfache Anfrage gestellt und die Antwort
+korrektheit überprüft. Mögliche Fehlerquellen sind hierbei: die Erreichbarkeit der API, die nicht-Einhaltung des Schemas
+und das fehlen von erwarteten Datenpunkten.
+
 ## Credits:
 
 
