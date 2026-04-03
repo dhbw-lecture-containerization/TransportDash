@@ -1,9 +1,17 @@
 import json
+import os
 from zoneinfo import ZoneInfo
 
 import psycopg2
 import pydeck as pdk
 import streamlit as st
+
+
+DB_HOST = os.getenv("POSTGRES_HOST", "postgres")
+DB_USER = os.getenv("POSTGRES_USER", "airflow")
+DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "airflow")
+DB_NAME = os.getenv("POSTGRES_DB", "airflow")
+DB_PORT = os.getenv("POSTGRES_PORT", "5432")
 
 
 def load_random_ship(cursor):
@@ -72,15 +80,17 @@ refresh_clicked = st.button("🔀 Anderes zufälliges Schiff")
 if refresh_clicked:
     st.rerun()
 
-db_connection = psycopg2.connect(
-    host="db",
-    user="postgres",
-    password="postgres",
-    database="postgres",
-    port=5432,
-)
+db_connection = None
 
 try:
+    db_connection = psycopg2.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        port=DB_PORT,
+    )
+
     with db_connection.cursor() as cursor:
         ship = load_random_ship(cursor)
 
@@ -191,4 +201,5 @@ try:
 except Exception as exc:
     st.error(f"Fehler beim Laden der Schiffsdaten: {exc}")
 finally:
-    db_connection.close()
+    if db_connection:
+        db_connection.close()
