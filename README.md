@@ -22,11 +22,11 @@ Die Daten werden von folgenden Diensten abgerufen:
 
 ### Branch to grade
 
-**main** (oder ein anderer Branch, der zur Bewertung vorgesehen ist)
+**main**
 
 ### Status
 
-*In Bearbeitung* / *Bereit zur Bewertung* (je nach aktuellem Stand des Projekts)
+*Bereit zur Bewertung*
 
 ## C4 Diagramme
 
@@ -54,13 +54,12 @@ Streamlit wird mit `streamlit run streamlit/app.py` gestartet.
 
 ## Kubernetes Deployment Manifest
 
-Link zum Kubernetes Deployment Manifest im Repository.
+Das Kubernetes Deployment Manifest befindet sich in [/kubernetes/TransportDash.yaml](/kubernetes/TransportDash.yaml).
 
 ## Image Liste
 
-- Image 1: Beschreibung, Link zum Dockerfile im Repository
-- Image 2: Beschreibung, Link zum Dockerfile im Repository
-- ...
+- [transportdash-airflow](https://github.com/dhbw-lecture-containerization/TransportDash/pkgs/container/transportdash-airflow): Dieses Image beinhält die DAGs für den Datenabruf.
+- [transportdash-streamlit](https://github.com/dhbw-lecture-containerization/TransportDash/pkgs/container/transportdash-streamlit): Dieses Image beinhält das Frontend für die Datenvisualisierung.
 
 ## Tests
 
