@@ -32,11 +32,11 @@ Die Daten werden von folgenden Diensten abgerufen:
 
 ### Context Diagramm
 
-![Context Diagramm](path/to/context_diagram.png)
+![Context Diagramm](C4/ContextDiagramm.png)
 
 ### Container Diagramm
 
-![Container Diagramm](path/to/container_diagram.png)
+![Container Diagramm](C4/ContainerDiagramm.png)
 
 ## Devcontainer Konfiguration
 
