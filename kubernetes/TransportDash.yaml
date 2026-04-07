@@ -110,7 +110,7 @@ metadata:
   labels:
     app: streamlit
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: streamlit
   ports:
@@ -135,6 +135,8 @@ spec:
         app: streamlit
     spec:
       enableServiceLinks: false
+      imagePullSecrets:
+      - name: regcred
       containers:
         - name: streamlit
           image: ghcr.io/dhbw-lecture-containerization/transportdash-streamlit:latest
@@ -172,7 +174,7 @@ metadata:
   labels:
     app: airflow-webserver
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: airflow-webserver
   ports:
@@ -196,6 +198,8 @@ spec:
       labels:
         app: airflow-webserver
     spec:
+      imagePullSecrets:
+      - name: regcred
       containers:
         - name: airflow-webserver
           image: ghcr.io/dhbw-lecture-containerization/transportdash-airflow:latest
@@ -249,6 +253,8 @@ spec:
       labels:
         app: airflow-scheduler
     spec:
+      imagePullSecrets:
+      - name: regcred
       containers:
         - name: airflow-scheduler
           image: ghcr.io/dhbw-lecture-containerization/transportdash-airflow:latest
@@ -292,6 +298,8 @@ spec:
       labels:
         app: airflow-dagprocessor
     spec:
+      imagePullSecrets:
+      - name: regcred
       containers:
         - name: airflow-dagprocessor
           image: ghcr.io/dhbw-lecture-containerization/transportdash-airflow:latest

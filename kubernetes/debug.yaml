@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+  namespace: transportdash
+  labels:
+    app: airflow-scheduler
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-scheduler
+  template:
+    metadata:
+      labels:
+        app: airflow-scheduler
+    spec:
+      imagePullSecrets:
+      - name: regcred
+      containers:
+        - name: airflow-scheduler
+          image: ghcr.io/dhbw-lecture-containerization/transportdash-airflow:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: AIRFLOW__CORE__EXECUTOR
+              value: LocalExecutor
+            - name: AIRFLOW__CORE__LOAD_EXAMPLES
+              value: "false"
+            - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
+              value: "true"
+            - name: AIRFLOW__CORE__HOSTNAME_CALLABLE
+              value: airflow.utils.net.get_host_ip_address
+            - name: AIRFLOW__LOGGING__WORKER_LOG_SERVER_PORT
+              value: "8793"
+            - name: AIRFLOW__CORE__EXECUTION_API_SERVER_URL
+              value: "http://airflow-webserver:8080/execution/"
+          envFrom:
+            - secretRef:
+                name: airflow-secret
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              airflow db migrate &&
+              exec airflow scheduler
+---
